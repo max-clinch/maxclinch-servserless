@@ -27,18 +27,26 @@ interface TodosState {
   todos: Todo[]
   newTodoName: string
   loadingTodos: boolean
+  isEmptyInput: boolean
 }
 
 export class Todos extends React.PureComponent<TodosProps, TodosState> {
   state: TodosState = {
     todos: [],
     newTodoName: '',
-    loadingTodos: true
+    loadingTodos: true,
+    isEmptyInput: true
   }
 
   handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({ newTodoName: event.target.value })
+    if(event.target.value != ''){
+      this.setState({ 
+        newTodoName: event.target.value,
+        isEmptyInput: false
+      }) 
+    }
   }
+
 
   onEditButtonClick = (todoId: string) => {
     this.props.history.push(`/todos/${todoId}/edit`)
@@ -46,15 +54,22 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
 
   onTodoCreate = async (event: React.ChangeEvent<HTMLButtonElement>) => {
     try {
-      const dueDate = this.calculateDueDate()
-      const newTodo = await createTodo(this.props.auth.getIdToken(), {
-        name: this.state.newTodoName,
-        dueDate
-      })
-      this.setState({
+      const emptyInput = this.state.isEmptyInput
+      if(emptyInput){
+        alert('please enter a todo')
+      }
+      else {
+        const dueDate = this.calculateDueDate()
+        const newTodo = await createTodo(this.props.auth.getIdToken(), {
+          name: this.state.newTodoName,
+          dueDate
+        })
+        this.setState({
         todos: [...this.state.todos, newTodo],
-        newTodoName: ''
-      })
+        newTodoName: '',
+        isEmptyInput: true
+        })
+      }
     } catch {
       alert('Todo creation failed')
     }
@@ -96,8 +111,8 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
         todos,
         loadingTodos: false
       })
-    } catch (e) {
-      alert(`Failed to fetch todos: ${e.message}`)
+    } catch (ex) {
+      alert(`Failed to fetch todos: ${(ex as Error).message}`)
     }
   }
 
